@@ -9,6 +9,7 @@ const _config = {
   EMAIL_USER: process.env.EMAIL_USER,
   JWT_SECRET: process.env.JWT_SECRET,
   MONGO_URI: process.env.MONGO_URI,
+  RABBITMQ_URI: process.env.RABBITMQ_URI
 };
 
 
