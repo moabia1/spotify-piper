@@ -46,7 +46,60 @@ export async function register(req, res) {
 export async function googleAuthCallback(req, res) {
   const user = req.user
 
-  console.log(user)
+  const isUserExists = await userModel.findOne({
+    $or: [
+      { email: user.emails[0].value },
+      { googleId: user.id }],
+  });
 
-  res.send("Google auth callback")
+  if (isUserExists) {
+    const token = jwt.sign({
+      id: isUserExists._id,
+      role: isUserExists.role
+    }, config.JWT_SECRET, {
+      expiresIn: "2d"
+    })
+    res.cookie("token", token)
+
+    return res.status(200).json({
+      message: "User logged in successfully",
+      user: {
+        id: isUserExists._id,
+        email: isUserExists.email,
+        fullName: isUserExists.fullName,
+        role: isUserExists.role
+      }
+    })
+  }
+
+  const newUser = await userModel.create({
+    googleId: user.id,
+    email: user.emails[0].value,
+    fullName: {
+      firstName: user.name.givenName,
+      lastName: user.name.familyName
+    }
+  })
+
+  const token = jwt.sign(
+    {
+      id: newUser._id,
+      role: newUser.role,
+    },
+    config.JWT_SECRET,
+    {
+      expiresIn: "2d",
+    }
+  );
+  res.cookie("token", token);
+
+  res.status(201).json({
+    message: "User registerd successfully",
+    user: {
+      id: newUser._id,
+      email: newUser.email,
+      fullName: newUser.fullName,
+      role: newUser.role
+    }
+  })
 }
