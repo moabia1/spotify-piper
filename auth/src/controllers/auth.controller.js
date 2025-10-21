@@ -5,7 +5,7 @@ import config from "../config/config.js"
 import {publishToQueue} from "../broker/rabbit.js"
 
 export async function register(req, res) {
-  const { email, password, fullName: { firstName, lastName } } = req.body;
+  const { email, password, fullName: { firstName, lastName }, role="user" } = req.body;
   
   const existingUser = await userModel.findOne({ email: email });
   if (existingUser) {
@@ -20,7 +20,8 @@ export async function register(req, res) {
     fullName: {
       firstName,
       lastName
-    }
+    },
+    role
   })
 
   const token = jwt.sign({
