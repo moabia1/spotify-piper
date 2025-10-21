@@ -25,7 +25,8 @@ export async function register(req, res) {
 
   const token = jwt.sign({
     id: user._id,
-    role: user.role
+    role: user.role,
+    fullName: user.fullName
   }, config.JWT_SECRET, {
     expiresIn: "2d"
   })
@@ -62,7 +63,8 @@ export async function googleAuthCallback(req, res) {
   if (isUserExists) {
     const token = jwt.sign({
       id: isUserExists._id,
-      role: isUserExists.role
+      role: isUserExists.role,
+      fullName: isUserExists.fullName
     }, config.JWT_SECRET, {
       expiresIn: "2d"
     })
@@ -99,6 +101,7 @@ export async function googleAuthCallback(req, res) {
     {
       id: newUser._id,
       role: newUser.role,
+      fullName: newUser.fullName
     },
     config.JWT_SECRET,
     {
@@ -114,6 +117,43 @@ export async function googleAuthCallback(req, res) {
       email: newUser.email,
       fullName: newUser.fullName,
       role: newUser.role
+    }
+  })
+}
+
+export async function login(req, res) {
+  const { email, password } = req.body;
+  
+  const user = await userModel.findOne({ email });
+  if (!user) {
+    return res.status(400).json({
+      message: "Unauthorized! register first"
+    })
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password)
+
+  if (!isPasswordValid) {
+    return res.status(400).json({
+      message: "Incorrect Password"
+    })
+  }
+
+  const token = jwt.sign({
+    id: user._id,
+    role: user.role,
+    fullName: user.fullName
+  }, config.JWT_SECRET, { expiresIn: "2d" })
+  
+  res.cookie("token", token)
+  
+  res.status(200).json({
+    message: "User Login Successfully",
+    user: {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      fullName: user.fullName
     }
   })
 }
